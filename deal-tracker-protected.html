@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deal Document Status Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 28px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #f7fafc;
+        }
+
+        .doc-tabs {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .doc-tab {
+            padding: 10px 20px;
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .doc-tab:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+
+        .doc-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .doc-tab .delete-tab {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background: #f56565;
+            color: white;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+
+        .doc-tab:hover .delete-tab {
+            display: flex;
+        }
+
+        .add-doc-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .add-doc-btn:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .doc-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .doc-header {
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .doc-header h2 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .status-badge:focus {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        .doc-body {
+            padding: 30px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .info-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .info-label {
+            color: #718096;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-content {
+            color: #2d3748;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .editable-field {
+            padding: 12px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .editable-field:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea.editable-field {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .key-issues {
+            margin-top: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .issues-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .issue-item {
+            padding: 15px 18px;
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .issue-item:hover {
+            background: #edf2f7;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .issue-text {
+            flex: 1;
+            color: #2d3748;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .issue-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            padding: 6px 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #718096;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            color: #667eea;
+            transform: scale(1.1);
+        }
+
+        .add-issue-btn {
+            padding: 10px 18px;
+            background: #f7fafc;
+            color: #667eea;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .add-issue-btn:hover {
+            background: #edf2f7;
+            border-color: #667eea;
+        }
+
+        .save-indicator {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 12px 24px;
+            background: #48bb78;
+            color: white;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .save-indicator.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 1200px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .doc-tabs {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .doc-tab {
+                text-align: center;
+            }
+        }
+
+        /* Password Protection Styles */
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .password-overlay.hidden {
+            display: none;
+        }
+
+        .password-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .password-box h2 {
+            color: #2d3748;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .password-box p {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .password-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .password-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .password-error {
+            color: #e53e3e;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .password-error.show {
+            display: block;
+        }
+
+        .main-content {
+            display: none;
+        }
+
+        .main-content.unlocked {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Password Protection Overlay -->
+    <div class="password-overlay" id="password-overlay">
+        <div class="password-box">
+            <h2>🔒 Protected Document</h2>
+            <p>Enter password to access the deal tracker</p>
+            <form id="password-form" onsubmit="checkPassword(event)">
+                <input 
+                    type="password" 
+                    class="password-input" 
+                    id="password-input" 
+                    placeholder="Enter password"
+                    autocomplete="off"
+                    autofocus
+                >
+                <button type="submit" class="password-submit">Unlock</button>
+                <div class="password-error" id="password-error">Incorrect password. Please try again.</div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content (hidden until unlocked) -->
+    <div class="main-content" id="main-content">
+    <div class="container">
+        <div class="header">
+            <h1>Deal Document Status Tracker</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="exportData()">📥 Export Report</button>
+            </div>
+        </div>
+
+        <div class="doc-tabs" id="doc-tabs">
+            <!-- Document tabs will be dynamically generated -->
+        </div>
+
+        <div class="doc-card" id="doc-card">
+            <!-- Active document card will be displayed here -->
+        </div>
+    </div>
+
+    <div class="save-indicator" id="save-indicator">✓ Saved</div>
+    </div> <!-- Close main-content -->
+
+    <script>
+        // ============================================
+        // PASSWORD PROTECTION
+        // ============================================
+        // Password is stored as a hash for security
+        // To change password: 
+        // 1. Go to https://emn178.github.io/online-tools/sha256.html
+        // 2. Enter your new password and get its SHA-256 hash
+        // 3. Replace the CORRECT_PASSWORD_HASH value below
+        
+        // Current password: "deal2024" 
+        // Hash below is SHA-256 of "deal2024"
+        const CORRECT_PASSWORD_HASH = "b051bcc9ccf4ea540641a7b0b03816cc1a7bf87cc3d3c0612c23df76ab0ab142";
+
+        // Check if already authenticated in this session
+        if (sessionStorage.getItem('dealTrackerAuth') === 'true') {
+            unlockContent();
+        }
+
+        // Simple SHA-256 hash function
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        async function checkPassword(event) {
+            event.preventDefault();
+            const input = document.getElementById('password-input');
+            const error = document.getElementById('password-error');
+            
+            const inputHash = await sha256(input.value);
+            
+            if (inputHash === CORRECT_PASSWORD_HASH) {
+                sessionStorage.setItem('dealTrackerAuth', 'true');
+                unlockContent();
+            } else {
+                error.classList.add('show');
+                input.value = '';
+                input.focus();
+                
+                // Hide error after 3 seconds
+                setTimeout(() => {
+                    error.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        function unlockContent() {
+            document.getElementById('password-overlay').classList.add('hidden');
+            document.getElementById('main-content').classList.add('unlocked');
+        }
+
+        // ============================================
+        // MAIN APPLICATION CODE
+        // ============================================
+        let documents = [
+            { id: 'sha', name: 'SHA', color: '#667eea', removable: false },
+            { id: 'ssa', name: 'SSA', color: '#764ba2', removable: false },
+            { id: 'cp', name: 'CP List', color: '#f59e0b', removable: false },
+            { id: 'warranties', name: 'Warranties', color: '#10b981', removable: false },
+            { id: 'policies', name: 'Policies', color: '#8b5cf6', removable: false }
+        ];
+
+        let data = loadData();
+        let activeDocId = 'sha';
+
+        function loadData() {
+            const saved = localStorage.getItem('dealDocsData');
+            if (saved) {
+                const savedData = JSON.parse(saved);
+                
+                // Load custom documents
+                if (savedData._customDocs) {
+                    documents = documents.concat(savedData._customDocs);
+                }
+                
+                return savedData;
+            }
+            
+            // Initialize default data
+            const initial = { _customDocs: [] };
+            documents.forEach(doc => {
+                initial[doc.id] = {
+                    status: 'Not Started',
+                    pendingWith: '',
+                    nextSteps: '',
+                    timeline: '',
+                    issues: []
+                };
+            });
+            return initial;
+        }
+
+        function saveData() {
+            // Save custom documents separately
+            const customDocs = documents.filter(d => d.removable);
+            data._customDocs = customDocs;
+            
+            localStorage.setItem('dealDocsData', JSON.stringify(data));
+            showSaveIndicator();
+        }
+
+        function showSaveIndicator() {
+            const indicator = document.getElementById('save-indicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById('doc-tabs');
+            
+            tabsContainer.innerHTML = documents.map(doc => `
+                <div class="doc-tab ${activeDocId === doc.id ? 'active' : ''}" onclick="switchDoc('${doc.id}')">
+                    ${doc.name}
+                    ${doc.removable ? `<span class="delete-tab" onclick="event.stopPropagation(); deleteDocument('${doc.id}')">×</span>` : ''}
+                </div>
+            `).join('') + `
+                <button class="add-doc-btn" onclick="addDocument()">+ Add Document</button>
+            `;
+        }
+
+        function switchDoc(docId) {
+            activeDocId = docId;
+            renderTabs();
+            renderDocument();
+        }
+
+        function renderDocument() {
+            const doc = documents.find(d => d.id === activeDocId);
+            const docData = data[activeDocId];
+            const cardContainer = document.getElementById('doc-card');
+            
+            cardContainer.innerHTML = `
+                <div class="doc-header" style="background: linear-gradient(135deg, ${doc.color} 0%, ${adjustColor(doc.color, -20)} 100%);">
+                    <h2>${doc.name}</h2>
+                    <input 
+                        type="text" 
+                        class="status-badge" 
+                        value="${docData.status}"
+                        onchange="updateField('${doc.id}', 'status', this.value)"
+                        placeholder="Status"
+                    >
+                </div>
+                <div class="doc-body">
+                    <div class="info-grid">
+                        <div class="info-section">
+                            <div class="info-label">Pending With</div>
+                            <input 
+                                type="text" 
+                                class="editable-field" 
+                                placeholder="e.g., Legal Team, Seller's Counsel"
+                                value="${docData.pendingWith}"
+                                onchange="updateField('${doc.id}', 'pendingWith', this.value)"
+                            >
+                        </div>
+                        <div class="info-section">
+                            <div class="info-label">Timeline for Closure</div>
+                            <input 
+                                type="text" 
+                                class="editable-field" 
+                                placeholder="e.g., 2 weeks, By Jan 15"
+                                value="${docData.timeline}"
+                                onchange="updateField('${doc.id}', 'timeline', this.value)"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-label">Next Steps</div>
+                        <textarea 
+                            class="editable-field" 
+                            placeholder="What needs to happen next?"
+                            onchange="updateField('${doc.id}', 'nextSteps', this.value)"
+                        >${docData.nextSteps}</textarea>
+                    </div>
+                    
+                    <div class="key-issues">
+                        <div class="section-header">
+                            <div class="info-label">Key Issues</div>
+                        </div>
+                        <ul class="issues-list" id="issues-${doc.id}">
+                            ${docData.issues.map((issue, index) => `
+                                <li class="issue-item">
+                                    <span class="issue-text">• ${issue}</span>
+                                    <div class="issue-actions">
+                                        <button class="icon-btn" onclick="editIssue('${doc.id}', ${index})" title="Edit">✏️</button>
+                                        <button class="icon-btn" onclick="deleteIssue('${doc.id}', ${index})" title="Delete">🗑️</button>
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <button class="add-issue-btn" onclick="addIssue('${doc.id}')">+ Add Issue</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function adjustColor(color, percent) {
+            const num = parseInt(color.replace("#",""), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = (num >> 16) + amt;
+            const G = (num >> 8 & 0x00FF) + amt;
+            const B = (num & 0x0000FF) + amt;
+            return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 +
+                (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255))
+                .toString(16).slice(1);
+        }
+
+        function updateField(docId, field, value) {
+            data[docId][field] = value;
+            saveData();
+        }
+
+        function addDocument() {
+            const name = prompt('Enter document name:');
+            if (name && name.trim()) {
+                const id = 'doc_' + Date.now();
+                const colors = ['#667eea', '#764ba2', '#f59e0b', '#10b981', '#8b5cf6', '#6366f1', '#ec4899', '#14b8a6'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                const newDoc = {
+                    id: id,
+                    name: name.trim(),
+                    color: color,
+                    removable: true
+                };
+                
+                documents.push(newDoc);
+                data[id] = {
+                    status: 'Not Started',
+                    pendingWith: '',
+                    nextSteps: '',
+                    timeline: '',
+                    issues: []
+                };
+                
+                activeDocId = id;
+                saveData();
+                renderTabs();
+                renderDocument();
+            }
+        }
+
+        function deleteDocument(docId) {
+            if (confirm('Delete this document? All data will be lost.')) {
+                documents = documents.filter(d => d.id !== docId);
+                delete data[docId];
+                
+                if (activeDocId === docId) {
+                    activeDocId = documents[0].id;
+                }
+                
+                saveData();
+                renderTabs();
+                renderDocument();
+            }
+        }
+
+        function addIssue(docId) {
+            const issue = prompt('Enter key issue:');
+            if (issue && issue.trim()) {
+                data[docId].issues.push(issue.trim());
+                saveData();
+                renderDocument();
+            }
+        }
+
+        function editIssue(docId, index) {
+            const currentIssue = data[docId].issues[index];
+            const newIssue = prompt('Edit issue:', currentIssue);
+            if (newIssue !== null && newIssue.trim()) {
+                data[docId].issues[index] = newIssue.trim();
+                saveData();
+                renderDocument();
+            }
+        }
+
+        function deleteIssue(docId, index) {
+            if (confirm('Delete this issue?')) {
+                data[docId].issues.splice(index, 1);
+                saveData();
+                renderDocument();
+            }
+        }
+
+        function exportData() {
+            let report = 'DEAL DOCUMENT STATUS REPORT\n';
+            report += '='.repeat(80) + '\n\n';
+            report += `Generated: ${new Date().toLocaleString()}\n\n`;
+
+            documents.forEach(doc => {
+                const docData = data[doc.id];
+                report += `${doc.name}\n`;
+                report += '-'.repeat(80) + '\n';
+                report += `Current Status: ${docData.status || 'Not Started'}\n`;
+                report += `Pending With: ${docData.pendingWith || 'N/A'}\n`;
+                report += `Timeline for Closure: ${docData.timeline || 'TBD'}\n\n`;
+                report += `Next Steps:\n${docData.nextSteps || 'N/A'}\n\n`;
+                
+                if (docData.issues.length > 0) {
+                    report += 'Key Issues:\n';
+                    docData.issues.forEach((issue, i) => {
+                        report += `  • ${issue}\n`;
+                    });
+                } else {
+                    report += 'Key Issues: None\n';
+                }
+                
+                report += '\n\n';
+            });
+
+            // Create blob and download
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `deal-status-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize
+        renderTabs();
+        renderDocument();
+    </script>
+</body>
+</html>
