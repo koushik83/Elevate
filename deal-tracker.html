@@ -166,6 +166,41 @@
             font-weight: 600;
         }
 
+        .doc-title-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .doc-header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .doc-header-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .doc-header-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        .doc-header-btn-danger:hover {
+            background: rgba(239, 68, 68, 0.8);
+        }
+
         .status-badge {
             padding: 8px 20px;
             background: rgba(255,255,255,0.2);
@@ -176,11 +211,51 @@
             color: white;
             outline: none;
             transition: all 0.2s ease;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
         }
 
         .status-badge:focus {
             background: rgba(255,255,255,0.3);
             border-color: rgba(255,255,255,0.5);
+        }
+
+        .status-badge option {
+            background: #2d3748;
+            color: white;
+            padding: 10px;
+        }
+
+        .timeline-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .days-countdown {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .days-countdown.future {
+            background: #e6fffa;
+            color: #047857;
+        }
+
+        .days-countdown.today {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .days-countdown.overdue {
+            background: #fee2e2;
+            color: #dc2626;
         }
 
         .doc-body {
@@ -269,11 +344,98 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
+        .issue-item.critical {
+            border: 2px solid #e53e3e;
+            background: #fff5f5;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .issue-item.critical .issue-text {
+            color: #c53030;
+            font-weight: 600;
+        }
+
+        .critical-badge {
+            background: #e53e3e;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 8px;
+            text-transform: uppercase;
+        }
+
+        .critical-toggle {
+            padding: 6px 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .critical-toggle:hover {
+            transform: scale(1.2);
+        }
+
         .issue-text {
             flex: 1;
             color: #2d3748;
             font-size: 14px;
             line-height: 1.5;
+        }
+
+        .issue-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .issue-comment {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            padding: 8px 10px;
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #92400e;
+            line-height: 1.4;
+        }
+
+        .issue-comment-icon {
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .issue-comment-text {
+            flex: 1;
+        }
+
+        .comment-delete-btn {
+            background: #fbbf24;
+            border: none;
+            color: #78350f;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .comment-delete-btn:hover {
+            background: #f59e0b;
+            color: #451a03;
+            transform: scale(1.1);
         }
 
         .issue-actions {
@@ -547,6 +709,10 @@
         // ============================================
         // MAIN APPLICATION CODE
         // ============================================
+
+        // Google Sheets API URL
+        const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbyXiPv5Aj_pVcsVvMgyNe7VDxXVN6Avksmg1aqLdetC7EiBvj7YvxM7Vug-gcEsC2kh5Q/exec';
+
         let documents = [
             { id: 'sha', name: 'SHA', color: '#667eea', removable: false },
             { id: 'ssa', name: 'SSA', color: '#764ba2', removable: false },
@@ -555,24 +721,64 @@
             { id: 'policies', name: 'Policies', color: '#8b5cf6', removable: false }
         ];
 
-        let data = loadData();
+        let data = {};
         let activeDocId = 'sha';
+        let isLoading = true;
 
-        function loadData() {
+        // Initialize app - load from Google Sheets first, fallback to localStorage
+        async function initApp() {
+            try {
+                data = await loadFromSheets();
+                console.log('Loaded from Google Sheets');
+            } catch (error) {
+                console.log('Sheets unavailable, using localStorage:', error);
+                data = loadFromLocalStorage();
+            }
+            isLoading = false;
+            renderTabs();
+            renderDocument();
+        }
+
+        // Load data from Google Sheets
+        async function loadFromSheets() {
+            const response = await fetch(`${SHEETS_API_URL}?action=get`, {
+                method: 'GET',
+                redirect: 'follow'
+            });
+            const text = await response.text();
+            const savedData = text ? JSON.parse(text) : {};
+
+            if (savedData && Object.keys(savedData).length > 0) {
+                if (savedData._allDocs) {
+                    documents = savedData._allDocs;
+                } else if (savedData._customDocs) {
+                    documents = documents.concat(savedData._customDocs);
+                }
+                localStorage.setItem('dealDocsData', JSON.stringify(savedData));
+                return savedData;
+            }
+
+            return getDefaultData();
+        }
+
+        // Load data from localStorage (fallback/cache)
+        function loadFromLocalStorage() {
             const saved = localStorage.getItem('dealDocsData');
             if (saved) {
                 const savedData = JSON.parse(saved);
-                
-                // Load custom documents
-                if (savedData._customDocs) {
+                if (savedData._allDocs) {
+                    documents = savedData._allDocs;
+                } else if (savedData._customDocs) {
                     documents = documents.concat(savedData._customDocs);
                 }
-                
                 return savedData;
             }
-            
-            // Initialize default data
-            const initial = { _customDocs: [] };
+            return getDefaultData();
+        }
+
+        // Get default initial data
+        function getDefaultData() {
+            const initial = { _allDocs: documents };
             documents.forEach(doc => {
                 initial[doc.id] = {
                     status: 'Not Started',
@@ -585,17 +791,34 @@
             return initial;
         }
 
-        function saveData() {
-            // Save custom documents separately
-            const customDocs = documents.filter(d => d.removable);
-            data._customDocs = customDocs;
-            
+        // Save data to both Google Sheets and localStorage
+        async function saveData() {
+            data._allDocs = documents;
+
+            // Save to localStorage immediately (fast)
             localStorage.setItem('dealDocsData', JSON.stringify(data));
-            showSaveIndicator();
+            showSaveIndicator('Saving...');
+
+            // Save to Google Sheets (async)
+            try {
+                const formData = new FormData();
+                formData.append('action', 'save');
+                formData.append('data', JSON.stringify(data));
+
+                await fetch(SHEETS_API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                showSaveIndicator('Saved to Cloud');
+            } catch (error) {
+                console.error('Failed to save to Sheets:', error);
+                showSaveIndicator('Saved Locally');
+            }
         }
 
-        function showSaveIndicator() {
+        function showSaveIndicator(message = 'Saved') {
             const indicator = document.getElementById('save-indicator');
+            indicator.textContent = '✓ ' + message;
             indicator.classList.add('show');
             setTimeout(() => {
                 indicator.classList.remove('show');
@@ -628,14 +851,21 @@
             
             cardContainer.innerHTML = `
                 <div class="doc-header" style="background: linear-gradient(135deg, ${doc.color} 0%, ${adjustColor(doc.color, -20)} 100%);">
-                    <h2>${doc.name}</h2>
-                    <input 
-                        type="text" 
-                        class="status-badge" 
-                        value="${docData.status}"
+                    <div class="doc-title-section">
+                        <h2>${doc.name}</h2>
+                        <div class="doc-header-actions">
+                            <button class="doc-header-btn" onclick="renameDocument('${doc.id}')" title="Rename Document">✏️</button>
+                            <button class="doc-header-btn doc-header-btn-danger" onclick="deleteDocument('${doc.id}')" title="Delete Document">🗑️</button>
+                        </div>
+                    </div>
+                    <select
+                        class="status-badge"
                         onchange="updateField('${doc.id}', 'status', this.value)"
-                        placeholder="Status"
                     >
+                        <option value="Not Started" ${docData.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                        <option value="Progressing" ${docData.status === 'Progressing' ? 'selected' : ''}>Progressing</option>
+                        <option value="Closed" ${docData.status === 'Closed' ? 'selected' : ''}>Closed</option>
+                    </select>
                 </div>
                 <div class="doc-body">
                     <div class="info-grid">
@@ -651,13 +881,15 @@
                         </div>
                         <div class="info-section">
                             <div class="info-label">Timeline for Closure</div>
-                            <input 
-                                type="text" 
-                                class="editable-field" 
-                                placeholder="e.g., 2 weeks, By Jan 15"
-                                value="${docData.timeline}"
-                                onchange="updateField('${doc.id}', 'timeline', this.value)"
-                            >
+                            <div class="timeline-wrapper">
+                                <input
+                                    type="date"
+                                    class="editable-field"
+                                    value="${docData.timeline}"
+                                    onchange="updateField('${doc.id}', 'timeline', this.value)"
+                                >
+                                ${docData.timeline ? `<div class="days-countdown ${getCountdownClass(docData.timeline)}">${calculateDaysRemaining(docData.timeline)}</div>` : ''}
+                            </div>
                         </div>
                     </div>
 
@@ -675,15 +907,22 @@
                             <div class="info-label">Key Issues</div>
                         </div>
                         <ul class="issues-list" id="issues-${doc.id}">
-                            ${docData.issues.map((issue, index) => `
-                                <li class="issue-item">
-                                    <span class="issue-text">• ${issue}</span>
+                            ${docData.issues.map((issue, index) => {
+                                const issueObj = normalizeIssue(issue);
+                                return `
+                                <li class="issue-item ${issueObj.critical ? 'critical' : ''}">
+                                    <div class="issue-content">
+                                        <span class="issue-text">${issueObj.critical ? '<span class="critical-badge">CRITICAL</span>' : ''}• ${issueObj.text}</span>
+                                        ${issueObj.comment ? `<div class="issue-comment"><span class="issue-comment-icon">⚖️</span><span class="issue-comment-text">${issueObj.comment}</span><button class="comment-delete-btn" onclick="deleteComment('${doc.id}', ${index})" title="Remove note">×</button></div>` : ''}
+                                    </div>
                                     <div class="issue-actions">
+                                        <button class="icon-btn" onclick="editComment('${doc.id}', ${index})" title="Add/Edit Legal Note">⚖️</button>
+                                        <button class="critical-toggle" onclick="toggleCritical('${doc.id}', ${index})" title="Toggle Critical">${issueObj.critical ? '🔴' : '⚪'}</button>
                                         <button class="icon-btn" onclick="editIssue('${doc.id}', ${index})" title="Edit">✏️</button>
                                         <button class="icon-btn" onclick="deleteIssue('${doc.id}', ${index})" title="Delete">🗑️</button>
                                     </div>
                                 </li>
-                            `).join('')}
+                            `}).join('')}
                         </ul>
                         <button class="add-issue-btn" onclick="addIssue('${doc.id}')">+ Add Issue</button>
                     </div>
@@ -705,6 +944,69 @@
         function updateField(docId, field, value) {
             data[docId][field] = value;
             saveData();
+            if (field === 'timeline') {
+                renderDocument();
+            }
+        }
+
+        // Calculate days remaining from a date string
+        function calculateDaysRemaining(dateString) {
+            if (!dateString) return '';
+
+            const targetDate = new Date(dateString);
+            const today = new Date();
+
+            // Reset time to midnight for accurate day calculation
+            targetDate.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+
+            const diffTime = targetDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 0) {
+                return `📅 ${diffDays} day${diffDays !== 1 ? 's' : ''} to go`;
+            } else if (diffDays === 0) {
+                return '📅 Due today!';
+            } else {
+                const overdueDays = Math.abs(diffDays);
+                return `⚠️ Overdue by ${overdueDays} day${overdueDays !== 1 ? 's' : ''}`;
+            }
+        }
+
+        // Get CSS class for countdown display
+        function getCountdownClass(dateString) {
+            if (!dateString) return '';
+
+            const targetDate = new Date(dateString);
+            const today = new Date();
+
+            targetDate.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+
+            const diffTime = targetDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 0) return 'future';
+            if (diffDays === 0) return 'today';
+            return 'overdue';
+        }
+
+        // Normalize issue to object format (handles both string and object)
+        function normalizeIssue(issue) {
+            if (typeof issue === 'string') {
+                return { text: issue, critical: false };
+            }
+            return issue;
+        }
+
+        // Toggle critical status for an issue
+        function toggleCritical(docId, index) {
+            const issue = data[docId].issues[index];
+            const issueObj = normalizeIssue(issue);
+            issueObj.critical = !issueObj.critical;
+            data[docId].issues[index] = issueObj;
+            saveData();
+            renderDocument();
         }
 
         function addDocument() {
@@ -737,15 +1039,31 @@
             }
         }
 
+        function renameDocument(docId) {
+            const doc = documents.find(d => d.id === docId);
+            const newName = prompt('Enter new document name:', doc.name);
+            if (newName !== null && newName.trim()) {
+                doc.name = newName.trim();
+                saveData();
+                renderTabs();
+                renderDocument();
+            }
+        }
+
         function deleteDocument(docId) {
+            if (documents.length <= 1) {
+                alert('Cannot delete the last document. At least one document must remain.');
+                return;
+            }
+
             if (confirm('Delete this document? All data will be lost.')) {
                 documents = documents.filter(d => d.id !== docId);
                 delete data[docId];
-                
+
                 if (activeDocId === docId) {
                     activeDocId = documents[0].id;
                 }
-                
+
                 saveData();
                 renderTabs();
                 renderDocument();
@@ -755,17 +1073,43 @@
         function addIssue(docId) {
             const issue = prompt('Enter key issue:');
             if (issue && issue.trim()) {
-                data[docId].issues.push(issue.trim());
+                data[docId].issues.push({ text: issue.trim(), critical: false });
                 saveData();
                 renderDocument();
             }
         }
 
         function editIssue(docId, index) {
-            const currentIssue = data[docId].issues[index];
-            const newIssue = prompt('Edit issue:', currentIssue);
+            const issue = data[docId].issues[index];
+            const issueObj = normalizeIssue(issue);
+            const newIssue = prompt('Edit issue:', issueObj.text);
             if (newIssue !== null && newIssue.trim()) {
-                data[docId].issues[index] = newIssue.trim();
+                issueObj.text = newIssue.trim();
+                data[docId].issues[index] = issueObj;
+                saveData();
+                renderDocument();
+            }
+        }
+
+        function editComment(docId, index) {
+            const issue = data[docId].issues[index];
+            const issueObj = normalizeIssue(issue);
+            const currentComment = issueObj.comment || '';
+            const newComment = prompt('Add legal note/guidance (optional):', currentComment);
+            if (newComment !== null) {
+                issueObj.comment = newComment.trim();
+                data[docId].issues[index] = issueObj;
+                saveData();
+                renderDocument();
+            }
+        }
+
+        function deleteComment(docId, index) {
+            if (confirm('Remove this legal note?')) {
+                const issue = data[docId].issues[index];
+                const issueObj = normalizeIssue(issue);
+                issueObj.comment = '';
+                data[docId].issues[index] = issueObj;
                 saveData();
                 renderDocument();
             }
@@ -790,18 +1134,31 @@
                 report += '-'.repeat(80) + '\n';
                 report += `Current Status: ${docData.status || 'Not Started'}\n`;
                 report += `Pending With: ${docData.pendingWith || 'N/A'}\n`;
-                report += `Timeline for Closure: ${docData.timeline || 'TBD'}\n\n`;
+
+                // Timeline with days remaining
+                if (docData.timeline) {
+                    const daysInfo = calculateDaysRemaining(docData.timeline);
+                    report += `Timeline for Closure: ${docData.timeline} (${daysInfo})\n\n`;
+                } else {
+                    report += `Timeline for Closure: TBD\n\n`;
+                }
+
                 report += `Next Steps:\n${docData.nextSteps || 'N/A'}\n\n`;
-                
+
                 if (docData.issues.length > 0) {
                     report += 'Key Issues:\n';
                     docData.issues.forEach((issue, i) => {
-                        report += `  • ${issue}\n`;
+                        const issueObj = normalizeIssue(issue);
+                        const criticalTag = issueObj.critical ? '[CRITICAL] ' : '';
+                        report += `  • ${criticalTag}${issueObj.text}\n`;
+                        if (issueObj.comment) {
+                            report += `    ⚖️ Legal Note: ${issueObj.comment}\n`;
+                        }
                     });
                 } else {
                     report += 'Key Issues: None\n';
                 }
-                
+
                 report += '\n\n';
             });
 
@@ -817,9 +1174,8 @@
             URL.revokeObjectURL(url);
         }
 
-        // Initialize
-        renderTabs();
-        renderDocument();
+        // Initialize - load from Google Sheets
+        initApp();
     </script>
 </body>
 </html>
