@@ -801,13 +801,10 @@
 
             // Save to Google Sheets (async)
             try {
-                const formData = new FormData();
-                formData.append('action', 'save');
-                formData.append('data', JSON.stringify(data));
-
-                await fetch(SHEETS_API_URL, {
-                    method: 'POST',
-                    body: formData
+                const jsonData = encodeURIComponent(JSON.stringify(data));
+                await fetch(`${SHEETS_API_URL}?action=save&data=${jsonData}`, {
+                    method: 'GET',
+                    redirect: 'follow'
                 });
                 showSaveIndicator('Saved to Cloud');
             } catch (error) {
