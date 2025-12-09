@@ -234,35 +234,6 @@
             gap: 8px;
         }
 
-        .next-steps-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .next-steps-section {
-            flex: 1;
-        }
-
-        .next-steps-textarea {
-            width: 100%;
-            min-height: 80px;
-            resize: vertical;
-        }
-
-        .date-section {
-            width: 160px;
-            flex-shrink: 0;
-        }
-
-        .date-field {
-            width: 100%;
-        }
-
-        .key-issues-section {
-            flex: 1;
-        }
-
         .days-countdown {
             font-size: 13px;
             font-weight: 600;
@@ -894,38 +865,40 @@
                     </select>
                 </div>
                 <div class="doc-body">
-                    <div class="info-section" style="margin-bottom: 20px;">
-                        <div class="info-label">Pending With</div>
-                        <input
-                            type="text"
-                            class="editable-field"
-                            placeholder="e.g., Legal Team, Seller's Counsel"
-                            value="${docData.pendingWith}"
-                            onchange="updateField('${doc.id}', 'pendingWith', this.value)"
-                        >
-                    </div>
-
-                    <div class="next-steps-row">
-                        <div class="info-section next-steps-section">
-                            <div class="info-label">Next Steps</div>
-                            <textarea
-                                class="editable-field next-steps-textarea"
-                                placeholder="What needs to happen next?"
-                                onchange="updateField('${doc.id}', 'nextSteps', this.value)"
-                            >${docData.nextSteps}</textarea>
-                        </div>
-                        <div class="info-section date-section">
-                            <div class="info-label">Date</div>
-                            <input
-                                type="date"
-                                class="editable-field date-field"
-                                value="${docData.nextStepsDate || ''}"
-                                onchange="updateField('${doc.id}', 'nextStepsDate', this.value)"
+                    <div class="info-grid">
+                        <div class="info-section">
+                            <div class="info-label">Pending With</div>
+                            <input 
+                                type="text" 
+                                class="editable-field" 
+                                placeholder="e.g., Legal Team, Seller's Counsel"
+                                value="${docData.pendingWith}"
+                                onchange="updateField('${doc.id}', 'pendingWith', this.value)"
                             >
-                            ${docData.nextStepsDate ? `<div class="days-countdown ${getCountdownClass(docData.nextStepsDate)}">${calculateDaysRemaining(docData.nextStepsDate)}</div>` : ''}
+                        </div>
+                        <div class="info-section">
+                            <div class="info-label">Timeline for Closure</div>
+                            <div class="timeline-wrapper">
+                                <input
+                                    type="date"
+                                    class="editable-field"
+                                    value="${docData.timeline}"
+                                    onchange="updateField('${doc.id}', 'timeline', this.value)"
+                                >
+                                ${docData.timeline ? `<div class="days-countdown ${getCountdownClass(docData.timeline)}">${calculateDaysRemaining(docData.timeline)}</div>` : ''}
+                            </div>
                         </div>
                     </div>
 
+                    <div class="info-section">
+                        <div class="info-label">Next Steps</div>
+                        <textarea 
+                            class="editable-field" 
+                            placeholder="What needs to happen next?"
+                            onchange="updateField('${doc.id}', 'nextSteps', this.value)"
+                        >${docData.nextSteps}</textarea>
+                    </div>
+                    
                     <div class="key-issues">
                         <div class="section-header">
                             <div class="info-label">Key Issues</div>
@@ -968,7 +941,7 @@
         function updateField(docId, field, value) {
             data[docId][field] = value;
             saveData();
-            if (field === 'timeline' || field === 'nextStepsDate') {
+            if (field === 'timeline') {
                 renderDocument();
             }
         }
