@@ -742,6 +742,36 @@
         // Google Sheets API URL
         const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbyXiPv5Aj_pVcsVvMgyNe7VDxXVN6Avksmg1aqLdetC7EiBvj7YvxM7Vug-gcEsC2kh5Q/exec';
 
+        // Protected tabs - password hash for "ifu&"
+        const TAB_PASSWORD_HASH = '2c7bba682cea55911845a99a560ad31ae99b5d75abfd4fe561a5a8b6f0240f85';
+        const protectedTabNames = ['IFU Internal'];
+        let unlockedTabs = {}; // Track which protected tabs have been unlocked this session
+
+        // Check if a tab is protected
+        function isTabProtected(docName) {
+            return protectedTabNames.some(name => docName.toLowerCase() === name.toLowerCase());
+        }
+
+        // Check if a protected tab is unlocked
+        function isTabUnlocked(docId) {
+            return unlockedTabs[docId] === true;
+        }
+
+        // Show tab password prompt
+        async function promptTabPassword(docId, docName) {
+            const password = prompt(`🔒 "${docName}" is protected. Enter password:`);
+            if (password === null) return false;
+
+            const inputHash = await sha256(password);
+            if (inputHash === TAB_PASSWORD_HASH) {
+                unlockedTabs[docId] = true;
+                return true;
+            } else {
+                alert('Incorrect password');
+                return false;
+            }
+        }
+
         let documents = [
             { id: 'sha', name: 'SHA', color: '#667eea', removable: false },
             { id: 'ssa', name: 'SSA', color: '#764ba2', removable: false },
@@ -853,18 +883,30 @@
 
         function renderTabs() {
             const tabsContainer = document.getElementById('doc-tabs');
-            
-            tabsContainer.innerHTML = documents.map(doc => `
+
+            tabsContainer.innerHTML = documents.map(doc => {
+                const isProtected = isTabProtected(doc.name);
+                const isUnlocked = isTabUnlocked(doc.id);
+                const lockIcon = isProtected ? (isUnlocked ? '🔓 ' : '🔒 ') : '';
+                return `
                 <div class="doc-tab ${activeDocId === doc.id ? 'active' : ''}" onclick="switchDoc('${doc.id}')">
-                    ${doc.name}
+                    ${lockIcon}${doc.name}
                     ${doc.removable ? `<span class="delete-tab" onclick="event.stopPropagation(); deleteDocument('${doc.id}')">×</span>` : ''}
                 </div>
-            `).join('') + `
+            `}).join('') + `
                 <button class="add-doc-btn" onclick="addDocument()">+ Add Document</button>
             `;
         }
 
-        function switchDoc(docId) {
+        async function switchDoc(docId) {
+            const doc = documents.find(d => d.id === docId);
+
+            // Check if tab is protected
+            if (doc && isTabProtected(doc.name) && !isTabUnlocked(docId)) {
+                const unlocked = await promptTabPassword(docId, doc.name);
+                if (!unlocked) return; // Don't switch if password wrong/cancelled
+            }
+
             activeDocId = docId;
             renderTabs();
             renderDocument();
