@@ -5,6 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deal Document Status Tracker</title>
     <style>
+        :root {
+            /* Light mode colors */
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f7fafc;
+            --bg-hover: #edf2f7;
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --border-color: #e2e8f0;
+            --border-hover: #cbd5e0;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --shadow-strong: rgba(0, 0, 0, 0.12);
+            --accent-primary: #667eea;
+            --accent-secondary: #764ba2;
+            --issue-bg: #f7fafc;
+            --issue-hover: #edf2f7;
+            --critical-bg: #fff5f5;
+            --critical-border: #e53e3e;
+            --comment-bg: #fffbeb;
+            --comment-border: #fcd34d;
+            --comment-text: #92400e;
+            --success-bg: #e6fffa;
+            --success-text: #047857;
+            --warning-bg: #fef3c7;
+            --warning-text: #d97706;
+            --danger-bg: #fee2e2;
+            --danger-text: #dc2626;
+        }
+
+        [data-theme="dark"] {
+            /* Dark mode colors - easy on the eyes */
+            --bg-primary: #1a1d23;
+            --bg-secondary: #22262e;
+            --bg-tertiary: #2a2f38;
+            --bg-hover: #333842;
+            --text-primary: #e4e7eb;
+            --text-secondary: #b8bfc8;
+            --text-muted: #8b939e;
+            --border-color: #3d4350;
+            --border-hover: #4d5362;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --shadow-strong: rgba(0, 0, 0, 0.4);
+            --accent-primary: #7c93ed;
+            --accent-secondary: #9066c9;
+            --issue-bg: #2a2f38;
+            --issue-hover: #333842;
+            --critical-bg: #3d2a2a;
+            --critical-border: #e57373;
+            --comment-bg: #3d3527;
+            --comment-border: #d4a847;
+            --comment-text: #e5c07b;
+            --success-bg: #1e3a32;
+            --success-text: #4fd1a5;
+            --warning-bg: #3d3322;
+            --warning-text: #f0b429;
+            --danger-bg: #3d2a2a;
+            --danger-text: #f87171;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,9 +73,10 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f5f7fa;
+            background: var(--bg-primary);
             min-height: 100vh;
             padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .container {
@@ -24,19 +85,50 @@
         }
 
         .header {
-            background: white;
+            background: var(--bg-secondary);
             padding: 30px;
             border-radius: 12px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px var(--shadow-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .header h1 {
-            color: #2d3748;
+            color: var(--text-primary);
             font-size: 28px;
+        }
+
+        /* Dark Mode Toggle */
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-hover);
+        }
+
+        .theme-toggle-icon {
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        [data-theme="dark"] .theme-toggle-icon {
+            transform: rotate(180deg);
         }
 
         .header-actions {
@@ -46,7 +138,7 @@
 
         .btn {
             padding: 10px 20px;
-            background: #667eea;
+            background: var(--accent-primary);
             color: white;
             border: none;
             border-radius: 8px;
@@ -57,38 +149,39 @@
         }
 
         .btn:hover {
-            background: #5568d3;
+            background: var(--accent-secondary);
             transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
+            background: var(--bg-secondary);
+            color: var(--accent-primary);
+            border: 2px solid var(--accent-primary);
         }
 
         .btn-secondary:hover {
-            background: #f7fafc;
+            background: var(--bg-tertiary);
         }
 
         .doc-tabs {
-            background: white;
+            background: var(--bg-secondary);
             padding: 15px 20px;
             border-radius: 12px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px var(--shadow-color);
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
             align-items: center;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .doc-tab {
             padding: 10px 20px;
-            background: #f7fafc;
-            border: 2px solid #e2e8f0;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
             border-radius: 8px;
-            color: #4a5568;
+            color: var(--text-secondary);
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -97,14 +190,14 @@
         }
 
         .doc-tab:hover {
-            background: #edf2f7;
-            border-color: #cbd5e0;
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
         }
 
         .doc-tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
             color: white;
-            border-color: #667eea;
+            border-color: var(--accent-primary);
         }
 
         .doc-tab .delete-tab {
@@ -121,7 +214,7 @@
             justify-content: center;
             font-size: 12px;
             cursor: pointer;
-            border: 2px solid white;
+            border: 2px solid var(--bg-secondary);
         }
 
         .doc-tab:hover .delete-tab {
@@ -130,10 +223,10 @@
 
         .add-doc-btn {
             padding: 10px 20px;
-            background: white;
-            border: 2px dashed #cbd5e0;
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border-hover);
             border-radius: 8px;
-            color: #667eea;
+            color: var(--accent-primary);
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -141,15 +234,16 @@
         }
 
         .add-doc-btn:hover {
-            border-color: #667eea;
-            background: #f7fafc;
+            border-color: var(--accent-primary);
+            background: var(--bg-tertiary);
         }
 
         .doc-card {
-            background: white;
+            background: var(--bg-secondary);
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px var(--shadow-color);
             overflow: hidden;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .doc-header {
@@ -223,8 +317,8 @@
         }
 
         .status-badge option {
-            background: #2d3748;
-            color: white;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
             padding: 10px;
         }
 
@@ -232,6 +326,35 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+        }
+
+        .next-steps-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .next-steps-section {
+            flex: 1;
+        }
+
+        .next-steps-textarea {
+            width: 100%;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .date-section {
+            width: 160px;
+            flex-shrink: 0;
+        }
+
+        .date-field {
+            width: 100%;
+        }
+
+        .key-issues-section {
+            flex: 1;
         }
 
         .days-countdown {
@@ -244,18 +367,18 @@
         }
 
         .days-countdown.future {
-            background: #e6fffa;
-            color: #047857;
+            background: var(--success-bg);
+            color: var(--success-text);
         }
 
         .days-countdown.today {
-            background: #fef3c7;
-            color: #d97706;
+            background: var(--warning-bg);
+            color: var(--warning-text);
         }
 
         .days-countdown.overdue {
-            background: #fee2e2;
-            color: #dc2626;
+            background: var(--danger-bg);
+            color: var(--danger-text);
         }
 
         .doc-body {
@@ -276,7 +399,7 @@
         }
 
         .info-label {
-            color: #718096;
+            color: var(--text-muted);
             font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
@@ -284,25 +407,31 @@
         }
 
         .info-content {
-            color: #2d3748;
+            color: var(--text-primary);
             font-size: 15px;
             line-height: 1.6;
         }
 
         .editable-field {
             padding: 12px 14px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             font-size: 14px;
             font-family: inherit;
             width: 100%;
             transition: all 0.2s ease;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         .editable-field:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .editable-field::placeholder {
+            color: var(--text-muted);
         }
 
         textarea.editable-field {
@@ -328,8 +457,8 @@
 
         .issue-item {
             padding: 15px 18px;
-            background: #f7fafc;
-            border-left: 4px solid #667eea;
+            background: var(--issue-bg);
+            border-left: 4px solid var(--accent-primary);
             margin-bottom: 12px;
             border-radius: 6px;
             display: flex;
@@ -340,18 +469,18 @@
         }
 
         .issue-item:hover {
-            background: #edf2f7;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            background: var(--issue-hover);
+            box-shadow: 0 2px 8px var(--shadow-color);
         }
 
         .issue-item.critical {
-            border: 2px solid #e53e3e;
-            background: #fff5f5;
-            border-left: 4px solid #e53e3e;
+            border: 2px solid var(--critical-border);
+            background: var(--critical-bg);
+            border-left: 4px solid var(--critical-border);
         }
 
         .issue-item.critical .issue-text {
-            color: #c53030;
+            color: var(--danger-text);
             font-weight: 600;
         }
 
@@ -381,7 +510,7 @@
 
         .issue-text {
             flex: 1;
-            color: #2d3748;
+            color: var(--text-primary);
             font-size: 14px;
             line-height: 1.5;
         }
@@ -398,11 +527,11 @@
             align-items: flex-start;
             gap: 6px;
             padding: 8px 10px;
-            background: #fffbeb;
-            border: 1px solid #fcd34d;
+            background: var(--comment-bg);
+            border: 1px solid var(--comment-border);
             border-radius: 6px;
             font-size: 13px;
-            color: #92400e;
+            color: var(--comment-text);
             line-height: 1.4;
         }
 
@@ -449,20 +578,20 @@
             border: none;
             cursor: pointer;
             font-size: 16px;
-            color: #718096;
+            color: var(--text-muted);
             transition: all 0.2s ease;
         }
 
         .icon-btn:hover {
-            color: #667eea;
+            color: var(--accent-primary);
             transform: scale(1.1);
         }
 
         .add-issue-btn {
             padding: 10px 18px;
-            background: #f7fafc;
-            color: #667eea;
-            border: 2px dashed #cbd5e0;
+            background: var(--bg-tertiary);
+            color: var(--accent-primary);
+            border: 2px dashed var(--border-hover);
             border-radius: 8px;
             font-size: 14px;
             font-weight: 600;
@@ -472,8 +601,63 @@
         }
 
         .add-issue-btn:hover {
-            background: #edf2f7;
-            border-color: #667eea;
+            background: var(--bg-hover);
+            border-color: var(--accent-primary);
+        }
+
+        /* Resolved Issue Styles */
+        .issue-item.resolved {
+            background: var(--success-bg);
+            border-left: 4px solid var(--success-text);
+            opacity: 0.75;
+        }
+
+        .issue-item.resolved .issue-text {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .issue-item.resolved:hover {
+            opacity: 1;
+        }
+
+        .resolved-badge {
+            background: var(--success-text);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 8px;
+            text-transform: uppercase;
+        }
+
+        .resolve-btn {
+            padding: 6px 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .resolve-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .resolve-btn.resolved {
+            color: var(--success-text);
+        }
+
+        /* Pop animation for resolving */
+        @keyframes resolvePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 4px 20px var(--shadow-strong); }
+            100% { transform: scale(1); }
+        }
+
+        .issue-item.resolving {
+            animation: resolvePop 0.4s ease-out;
         }
 
         .save-indicator {
@@ -519,7 +703,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -531,7 +715,7 @@
         }
 
         .password-box {
-            background: white;
+            background: var(--bg-secondary);
             padding: 40px;
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
@@ -540,14 +724,14 @@
         }
 
         .password-box h2 {
-            color: #2d3748;
+            color: var(--text-primary);
             font-size: 24px;
             margin-bottom: 10px;
             text-align: center;
         }
 
         .password-box p {
-            color: #718096;
+            color: var(--text-muted);
             font-size: 14px;
             margin-bottom: 25px;
             text-align: center;
@@ -556,23 +740,25 @@
         .password-input {
             width: 100%;
             padding: 14px 16px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             font-size: 16px;
             margin-bottom: 15px;
             transition: all 0.2s ease;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         .password-input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
         }
 
         .password-submit {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -588,7 +774,7 @@
         }
 
         .password-error {
-            color: #e53e3e;
+            color: var(--danger-text);
             font-size: 14px;
             margin-top: 10px;
             text-align: center;
@@ -611,14 +797,18 @@
 <body>
     <!-- Password Protection Overlay -->
     <div class="password-overlay" id="password-overlay">
+        <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle-login" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">
+            <span class="theme-toggle-icon" id="theme-icon-login">🌙</span>
+            <span id="theme-text-login">Dark</span>
+        </button>
         <div class="password-box">
             <h2>🔒 Protected Document</h2>
             <p>Enter password to access the deal tracker</p>
             <form id="password-form" onsubmit="checkPassword(event)">
-                <input 
-                    type="password" 
-                    class="password-input" 
-                    id="password-input" 
+                <input
+                    type="password"
+                    class="password-input"
+                    id="password-input"
                     placeholder="Enter password"
                     autocomplete="off"
                     autofocus
@@ -635,6 +825,10 @@
         <div class="header">
             <h1>Deal Document Status Tracker</h1>
             <div class="header-actions">
+                <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle">
+                    <span class="theme-toggle-icon" id="theme-icon">🌙</span>
+                    <span id="theme-text">Dark</span>
+                </button>
                 <button class="btn btn-secondary" onclick="exportData()">📥 Export Report</button>
             </div>
         </div>
@@ -707,11 +901,88 @@
         }
 
         // ============================================
+        // DARK MODE TOGGLE
+        // ============================================
+
+        // Check for saved theme preference or default to light
+        function initTheme() {
+            const savedTheme = localStorage.getItem('dealTrackerTheme') || 'light';
+            setTheme(savedTheme);
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('dealTrackerTheme', theme);
+            updateThemeButton(theme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            setTheme(newTheme);
+        }
+
+        function updateThemeButton(theme) {
+            // Update main toggle
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            // Update login page toggle
+            const iconLogin = document.getElementById('theme-icon-login');
+            const textLogin = document.getElementById('theme-text-login');
+
+            const isDark = theme === 'dark';
+            const newIcon = isDark ? '☀️' : '🌙';
+            const newText = isDark ? 'Light' : 'Dark';
+
+            if (icon && text) {
+                icon.textContent = newIcon;
+                text.textContent = newText;
+            }
+            if (iconLogin && textLogin) {
+                iconLogin.textContent = newIcon;
+                textLogin.textContent = newText;
+            }
+        }
+
+        // Initialize theme on page load
+        initTheme();
+
+        // ============================================
         // MAIN APPLICATION CODE
         // ============================================
 
         // Google Sheets API URL
         const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbyXiPv5Aj_pVcsVvMgyNe7VDxXVN6Avksmg1aqLdetC7EiBvj7YvxM7Vug-gcEsC2kh5Q/exec';
+
+        // Protected tabs - password hash for "ifu&"
+        const TAB_PASSWORD_HASH = '2c7bba682cea55911845a99a560ad31ae99b5d75abfd4fe561a5a8b6f0240f85';
+        const protectedTabNames = ['IFU Internal'];
+        let unlockedTabs = {}; // Track which protected tabs have been unlocked this session
+
+        // Check if a tab is protected
+        function isTabProtected(docName) {
+            return protectedTabNames.some(name => docName.toLowerCase() === name.toLowerCase());
+        }
+
+        // Check if a protected tab is unlocked
+        function isTabUnlocked(docId) {
+            return unlockedTabs[docId] === true;
+        }
+
+        // Show tab password prompt
+        async function promptTabPassword(docId, docName) {
+            const password = prompt(`🔒 "${docName}" is protected. Enter password:`);
+            if (password === null) return false;
+
+            const inputHash = await sha256(password);
+            if (inputHash === TAB_PASSWORD_HASH) {
+                unlockedTabs[docId] = true;
+                return true;
+            } else {
+                alert('Incorrect password');
+                return false;
+            }
+        }
 
         let documents = [
             { id: 'sha', name: 'SHA', color: '#667eea', removable: false },
@@ -824,18 +1095,30 @@
 
         function renderTabs() {
             const tabsContainer = document.getElementById('doc-tabs');
-            
-            tabsContainer.innerHTML = documents.map(doc => `
+
+            tabsContainer.innerHTML = documents.map(doc => {
+                const isProtected = isTabProtected(doc.name);
+                const isUnlocked = isTabUnlocked(doc.id);
+                const lockIcon = isProtected ? (isUnlocked ? '🔓 ' : '🔒 ') : '';
+                return `
                 <div class="doc-tab ${activeDocId === doc.id ? 'active' : ''}" onclick="switchDoc('${doc.id}')">
-                    ${doc.name}
+                    ${lockIcon}${doc.name}
                     ${doc.removable ? `<span class="delete-tab" onclick="event.stopPropagation(); deleteDocument('${doc.id}')">×</span>` : ''}
                 </div>
-            `).join('') + `
+            `}).join('') + `
                 <button class="add-doc-btn" onclick="addDocument()">+ Add Document</button>
             `;
         }
 
-        function switchDoc(docId) {
+        async function switchDoc(docId) {
+            const doc = documents.find(d => d.id === docId);
+
+            // Check if tab is protected
+            if (doc && isTabProtected(doc.name) && !isTabUnlocked(docId)) {
+                const unlocked = await promptTabPassword(docId, doc.name);
+                if (!unlocked) return; // Don't switch if password wrong/cancelled
+            }
+
             activeDocId = docId;
             renderTabs();
             renderDocument();
@@ -865,58 +1148,60 @@
                     </select>
                 </div>
                 <div class="doc-body">
-                    <div class="info-grid">
-                        <div class="info-section">
-                            <div class="info-label">Pending With</div>
-                            <input 
-                                type="text" 
-                                class="editable-field" 
-                                placeholder="e.g., Legal Team, Seller's Counsel"
-                                value="${docData.pendingWith}"
-                                onchange="updateField('${doc.id}', 'pendingWith', this.value)"
-                            >
+                    <div class="info-section" style="margin-bottom: 20px;">
+                        <div class="info-label">Pending With</div>
+                        <input
+                            type="text"
+                            class="editable-field"
+                            placeholder="e.g., Legal Team, Seller's Counsel"
+                            value="${docData.pendingWith}"
+                            onchange="updateField('${doc.id}', 'pendingWith', this.value)"
+                        >
+                    </div>
+
+                    <div class="next-steps-row">
+                        <div class="info-section next-steps-section">
+                            <div class="info-label">Next Steps</div>
+                            <textarea
+                                class="editable-field next-steps-textarea"
+                                placeholder="What needs to happen next?"
+                                onchange="updateField('${doc.id}', 'nextSteps', this.value)"
+                            >${docData.nextSteps}</textarea>
                         </div>
-                        <div class="info-section">
-                            <div class="info-label">Timeline for Closure</div>
-                            <div class="timeline-wrapper">
-                                <input
-                                    type="date"
-                                    class="editable-field"
-                                    value="${docData.timeline}"
-                                    onchange="updateField('${doc.id}', 'timeline', this.value)"
-                                >
-                                ${docData.timeline ? `<div class="days-countdown ${getCountdownClass(docData.timeline)}">${calculateDaysRemaining(docData.timeline)}</div>` : ''}
-                            </div>
+                        <div class="info-section date-section">
+                            <div class="info-label">Date</div>
+                            <input
+                                type="date"
+                                class="editable-field date-field"
+                                value="${docData.nextStepsDate || ''}"
+                                onchange="updateField('${doc.id}', 'nextStepsDate', this.value)"
+                            >
+                            ${docData.nextStepsDate ? `<div class="days-countdown ${getCountdownClass(docData.nextStepsDate)}">${calculateDaysRemaining(docData.nextStepsDate)}</div>` : ''}
                         </div>
                     </div>
 
-                    <div class="info-section">
-                        <div class="info-label">Next Steps</div>
-                        <textarea 
-                            class="editable-field" 
-                            placeholder="What needs to happen next?"
-                            onchange="updateField('${doc.id}', 'nextSteps', this.value)"
-                        >${docData.nextSteps}</textarea>
-                    </div>
-                    
                     <div class="key-issues">
                         <div class="section-header">
                             <div class="info-label">Key Issues</div>
                         </div>
                         <ul class="issues-list" id="issues-${doc.id}">
-                            ${docData.issues.map((issue, index) => {
+                            ${sortIssuesByResolved(docData.issues).map((issue, index) => {
                                 const issueObj = normalizeIssue(issue);
+                                const originalIndex = docData.issues.indexOf(issue);
+                                const isResolved = issueObj.resolved;
+                                const isCritical = issueObj.critical && !isResolved;
                                 return `
-                                <li class="issue-item ${issueObj.critical ? 'critical' : ''}">
+                                <li class="issue-item ${isCritical ? 'critical' : ''} ${isResolved ? 'resolved' : ''}" id="issue-${doc.id}-${originalIndex}">
                                     <div class="issue-content">
-                                        <span class="issue-text">${issueObj.critical ? '<span class="critical-badge">CRITICAL</span>' : ''}• ${issueObj.text}</span>
-                                        ${issueObj.comment ? `<div class="issue-comment"><span class="issue-comment-icon">⚖️</span><span class="issue-comment-text">${issueObj.comment}</span><button class="comment-delete-btn" onclick="deleteComment('${doc.id}', ${index})" title="Remove note">×</button></div>` : ''}
+                                        <span class="issue-text">${isResolved ? '<span class="resolved-badge">RESOLVED</span>' : ''}${isCritical ? '<span class="critical-badge">CRITICAL</span>' : ''}• ${issueObj.text}</span>
+                                        ${issueObj.comment ? `<div class="issue-comment"><span class="issue-comment-icon">⚖️</span><span class="issue-comment-text">${issueObj.comment}</span><button class="comment-delete-btn" onclick="deleteComment('${doc.id}', ${originalIndex})" title="Remove note">×</button></div>` : ''}
                                     </div>
                                     <div class="issue-actions">
-                                        <button class="icon-btn" onclick="editComment('${doc.id}', ${index})" title="Add/Edit Legal Note">⚖️</button>
-                                        <button class="critical-toggle" onclick="toggleCritical('${doc.id}', ${index})" title="Toggle Critical">${issueObj.critical ? '🔴' : '⚪'}</button>
-                                        <button class="icon-btn" onclick="editIssue('${doc.id}', ${index})" title="Edit">✏️</button>
-                                        <button class="icon-btn" onclick="deleteIssue('${doc.id}', ${index})" title="Delete">🗑️</button>
+                                        <button class="resolve-btn ${isResolved ? 'resolved' : ''}" onclick="toggleResolved('${doc.id}', ${originalIndex})" title="${isResolved ? 'Mark as Unresolved' : 'Mark as Resolved'}">${isResolved ? '✅' : '☑️'}</button>
+                                        <button class="icon-btn" onclick="editComment('${doc.id}', ${originalIndex})" title="Add/Edit Legal Note">⚖️</button>
+                                        <button class="critical-toggle" onclick="toggleCritical('${doc.id}', ${originalIndex})" title="Toggle Critical">${issueObj.critical ? '🔴' : '⚪'}</button>
+                                        <button class="icon-btn" onclick="editIssue('${doc.id}', ${originalIndex})" title="Edit">✏️</button>
+                                        <button class="icon-btn" onclick="deleteIssue('${doc.id}', ${originalIndex})" title="Delete">🗑️</button>
                                     </div>
                                 </li>
                             `}).join('')}
@@ -941,7 +1226,7 @@
         function updateField(docId, field, value) {
             data[docId][field] = value;
             saveData();
-            if (field === 'timeline') {
+            if (field === 'timeline' || field === 'nextStepsDate') {
                 renderDocument();
             }
         }
@@ -1001,6 +1286,66 @@
             const issue = data[docId].issues[index];
             const issueObj = normalizeIssue(issue);
             issueObj.critical = !issueObj.critical;
+            data[docId].issues[index] = issueObj;
+            saveData();
+            renderDocument();
+        }
+
+        // Sort issues: unresolved first, resolved at bottom
+        function sortIssuesByResolved(issues) {
+            return [...issues].sort((a, b) => {
+                const aResolved = normalizeIssue(a).resolved ? 1 : 0;
+                const bResolved = normalizeIssue(b).resolved ? 1 : 0;
+                return aResolved - bResolved;
+            });
+        }
+
+        // Toggle resolved status for an issue
+        function toggleResolved(docId, index) {
+            const issue = data[docId].issues[index];
+            const issueObj = normalizeIssue(issue);
+            const wasResolved = issueObj.resolved;
+
+            // Toggle resolved status
+            issueObj.resolved = !wasResolved;
+
+            // Add/update resolved timestamp in comment
+            if (issueObj.resolved) {
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                const resolvedNote = `✅ Resolved on ${dateStr}`;
+
+                // Add resolved note to comment
+                if (issueObj.comment) {
+                    // Remove any previous resolved note
+                    issueObj.comment = issueObj.comment.replace(/\s*✅ Resolved on .+$/g, '');
+                    issueObj.comment = issueObj.comment.trim() + ' ' + resolvedNote;
+                } else {
+                    issueObj.comment = resolvedNote;
+                }
+
+                // Show pop animation
+                const issueElement = document.getElementById(`issue-${docId}-${index}`);
+                if (issueElement) {
+                    issueElement.classList.add('resolving');
+                    setTimeout(() => {
+                        data[docId].issues[index] = issueObj;
+                        saveData();
+                        renderDocument();
+                    }, 400);
+                    return;
+                }
+            } else {
+                // Remove resolved note from comment if unresolving
+                if (issueObj.comment) {
+                    issueObj.comment = issueObj.comment.replace(/\s*✅ Resolved on .+$/g, '').trim();
+                }
+            }
+
             data[docId].issues[index] = issueObj;
             saveData();
             renderDocument();
@@ -1146,8 +1491,9 @@
                     report += 'Key Issues:\n';
                     docData.issues.forEach((issue, i) => {
                         const issueObj = normalizeIssue(issue);
-                        const criticalTag = issueObj.critical ? '[CRITICAL] ' : '';
-                        report += `  • ${criticalTag}${issueObj.text}\n`;
+                        const resolvedTag = issueObj.resolved ? '[RESOLVED] ' : '';
+                        const criticalTag = issueObj.critical && !issueObj.resolved ? '[CRITICAL] ' : '';
+                        report += `  • ${resolvedTag}${criticalTag}${issueObj.text}\n`;
                         if (issueObj.comment) {
                             report += `    ⚖️ Legal Note: ${issueObj.comment}\n`;
                         }
